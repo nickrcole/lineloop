@@ -15,6 +15,9 @@
 // limitations under the License.
 //
 
+#ifndef RPI_DMA_UTILS
+#define RPI_DMA_UTILS
+
 // Location of peripheral registers in physical memory
 #define PHYS_REG_BASE   PI_4_REG_BASE
 #define PI_01_REG_BASE  0x20000000  // Pi Zero or 1
@@ -198,5 +201,7 @@ void disp_dma(int chan);
 void init_pwm(int freq, int range, int val);
 void start_pwm(void);
 void stop_pwm(void);
+
+#endif
 
 // EOF

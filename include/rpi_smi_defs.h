@@ -2,6 +2,9 @@
 //
 // v0.01 JPB 12/7/20 Adapted from rpi_smi_test v0.19
 
+#ifndef RPI_SMI_DEFS
+#define RPI_SMI_DEFS
+
 // Register definitions
 #define SMI_BASE    (PHYS_REG_BASE + 0x600000)
 #define SMI_CS      0x00    // Control & status
@@ -96,5 +99,7 @@ REG_DEF(SMI_FLVL_REG, SMI_FLVL_FIELDS);
 
 #define CLK_SMI_CTL     0xb0
 #define CLK_SMI_DIV     0xb4
+
+#endif
 
 // EOF

@@ -10,7 +10,7 @@ Nicholas Cole — 12/30/23
 #include <math.h>
 
 #include <ft2build.h>
-#include <render_toolkit.h>
+#include "./../../include/render_toolkit.h"
 #include FT_FREETYPE_H
 
 
@@ -44,21 +44,21 @@ draw_bitmap( FT_Bitmap*  bitmap,
   }
 }
 
-void
-show_image( frame_buf* frame )
-{
-  int  i, j;
+// void
+// show_image( frame_buf* frame )
+// {
+//   int  i, j;
 
 
-  for ( i = 0; i < HEIGHT; i++ )
-  {
-    for ( j = 0; j < WIDTH; j++ )
-      putchar( (*frame)[i][j] == 0 ? ' '
-                                : (*frame)[i][j] < 128 ? '+'
-                                                    : '*' );
-    putchar( '\n' );
-  }
-}
+//   for ( i = 0; i < HEIGHT; i++ )
+//   {
+//     for ( j = 0; j < WIDTH; j++ )
+//       putchar( (*frame)[i][j] == 0 ? ' '
+//                                 : (*frame)[i][j] < 128 ? '+'
+//                                                     : '*' );
+//     putchar( '\n' );
+//   }
+// }
 
 void flip_bitmap( frame_buf* frame ) {
     int i, j, k;
@@ -74,9 +74,9 @@ void flip_bitmap( frame_buf* frame ) {
 
 
 int
-render_text( char*      filename,
-           char*      text,
-           frame_buf* frame)
+rasterize_text( char*      filename,
+                char*      text,
+                frame_buf* frame)
 {
   FT_Library    library;
   FT_Face       face;
@@ -134,15 +134,11 @@ render_text( char*      filename,
 
   // Flip bitmap on the y axis
   flip_bitmap( frame );
+  // show_image( frame );
   FT_Done_Face    ( face );
   FT_Done_FreeType( library );
 
   return 0;
-}
-
-int main(int argc, char** argv) {
-    frame_buf *frame = malloc(sizeof(frame_buf));
-    render_text("TNR.ttf", "test", frame);
 }
 
 /* EOF */

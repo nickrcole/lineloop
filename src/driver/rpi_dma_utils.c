@@ -24,7 +24,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 
-#include "rpi_dma_utils.h"
+#include "./../../include/rpi_dma_utils.h"
 
 // If non-zero, print debug information
 #define DEBUG           0
@@ -36,7 +36,7 @@ char *dma_regstrs[] = {"DMA CS", "CB_AD", "TI", "SRCE_AD", "DEST_AD",
 char *gpio_mode_strs[] = {GPIO_MODE_STRS};
 
 // Virtual memory pointers to acceess GPIO, DMA and PWM from user space
-MEM_MAP pwm_regs, gpio_regs, dma_regs, clk_regs;
+MEM_MAP pwm_regs, gpio_regs, dma_regs, clk_regs_2;
 
 // Use mmap to obtain virtual address, given physical
 void *map_periph(MEM_MAP *mp, void *phys, int size)
@@ -313,11 +313,11 @@ void init_pwm(int freq, int range, int val)
     set_vc_clock(mbox_fd, PWM_CLOCK_ID, freq);
 #else
     int divi=CLOCK_HZ / freq;
-    *REG32(clk_regs, CLK_PWM_CTL) = CLK_PASSWD | (1 << 5);
-    while (*REG32(clk_regs, CLK_PWM_CTL) & (1 << 7)) ;
-    *REG32(clk_regs, CLK_PWM_DIV) = CLK_PASSWD | (divi << 12);
-    *REG32(clk_regs, CLK_PWM_CTL) = CLK_PASSWD | 6 | (1 << 4);
-    while ((*REG32(clk_regs, CLK_PWM_CTL) & (1 << 7)) == 0) ;
+    *REG32(clk_regs_2, CLK_PWM_CTL) = CLK_PASSWD | (1 << 5);
+    while (*REG32(clk_regs_2, CLK_PWM_CTL) & (1 << 7)) ;
+    *REG32(clk_regs_2, CLK_PWM_DIV) = CLK_PASSWD | (divi << 12);
+    *REG32(clk_regs_2, CLK_PWM_CTL) = CLK_PASSWD | 6 | (1 << 4);
+    while ((*REG32(clk_regs_2, CLK_PWM_CTL) & (1 << 7)) == 0) ;
 #endif
     usleep(100);
     *REG32(pwm_regs, PWM_RNG1) = range;

@@ -38,8 +38,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
-#include "rpi_dma_utils.h"
-#include "rpi_smi_defs.h"
+#include "./../../include/rpi_dma_utils.h"
+#include "./../../include/rpi_smi_defs.h"
+#include "./../../include/render_toolkit.h"
 
 #if PHYS_REG_BASE==PI_4_REG_BASE        // Timings for RPi v4 (1.5 GHz)
 #define SMI_TIMING       10, 15, 30, 15    // 400 ns cycle time
@@ -371,42 +372,26 @@ void init_smi(int width, int ns, int setup, int hold, int strobe);
 void setup_smi_dma(MEM_MAP *mp, int nsamp);
 void start_smi(MEM_MAP *mp);
 
-int main(int argc, char *argv[])
+void display_frame( frame_buf* frame ) {
+    int n;
+    chan_ledcount = 294;
+    for (n=0; n<chan_ledcount; n++)
+        rgb_txdata((*frame)[n], &tx_buffer[LED_TX_OSET(n)]);
+    memcpy(txdata, tx_buffer, TX_BUFF_SIZE(chan_ledcount));
+    enable_dma(DMA_CHAN);
+    start_smi(&vc_mem);
+    while (dma_active(DMA_CHAN))
+        usleep(10);
+}
+
+int driver_init( void )
 {
-    int args=0, n, oset=0;
     chan_ledcount = 294;
     signal(SIGINT, terminate);
     map_devices();
     init_smi(LED_NCHANS>8 ? SMI_16_BITS : SMI_8_BITS, SMI_TIMING);
     map_uncached_mem(&vc_mem, VC_MEM_SIZE);
     setup_smi_dma(&vc_mem, TX_BUFF_LEN(chan_ledcount));
-    printf("%s %u LED%s per channel, %u channels\n", testmode ? "Testing" : "Setting",
-           chan_ledcount, chan_ledcount==1 ? "" : "s", LED_NCHANS);
-    int clear = 0;
-    if (clear) {
-        for (n=0; n<chan_ledcount; n++) {
-            rgb_txdata(clear_rgbs[n], &tx_buffer[LED_TX_OSET(n)]);
-        }
-    } else {
-        while (1) {
-            for (n=0; n<chan_ledcount; n++)
-            {
-                rgb_txdata(test_c[n - oset%chan_ledcount], &tx_buffer[LED_TX_OSET(n)]);
-            }
-        #if LED_NCHANS <= 8
-            swap_bytes(tx_buffer, TX_BUFF_SIZE(chan_ledcount));
-        #endif
-            memcpy(txdata, tx_buffer, TX_BUFF_SIZE(chan_ledcount));
-            enable_dma(DMA_CHAN);
-            start_smi(&vc_mem);
-            usleep(CHASE_MSEC * 200);
-            while (dma_active(DMA_CHAN))
-                usleep(10);
-            oset++;
-        }
-    }
-    terminate(0);
-    return(0);
 }
 
 // Convert RGB text string into integer data, for given channel
