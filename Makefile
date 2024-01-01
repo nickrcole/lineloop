@@ -12,4 +12,4 @@ gcc -o text_render text_render.c -Ifreetype/include -L/usr/lib/arm-linux-gnueabi
 gcc -Wall -o rpi_pixleds rpi_pixleds.c rpi_dma_utils.c -I./include -fcommon
 
 # MASTER:
-gcc -o lineloop lineloop.c animations.c ./render/text_rasterize.c ./loop/ric_stage.c ./driver/rpi_dma_utils.c ./driver/rpi_pixleds.c -I./../freetype/include -I./include -L/usr/lib/arm-linux/gnueabihf -lfreetype -lm
+gcc -o lineloop lineloop.c animations.c ./rasterize/text_rasterize.c ./loop/render_components.c ./driver/rpi_dma_utils.c ./driver/rpi_pixleds.c -I./../freetype/include -I./include -L/usr/lib/arm-linux/gnueabihf -lfreetype -lm

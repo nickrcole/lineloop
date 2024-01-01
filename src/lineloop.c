@@ -18,7 +18,7 @@ Nicholas Cole — 12/30/23
 const int FRAME_BUF_SIZE = sizeof(frame_buf);
 const int COMPONENT_SIZE = sizeof(Component);
 char* FONT_PATH = "/home/pi/lineloop/fonts/TNR.ttf";
-Component* predictions;
+Component* comp;
 
 void show_image( frame_buf* frame )
 {
@@ -44,11 +44,11 @@ void render_loop( void ) {
         gettimeofday(&start, NULL);
 
         // Prepare stage
-        Point new_pos = predictions->animation(predictions->position, predictions->speed);
-        predictions->position = new_pos;
+        Point new_pos = comp->animation(comp->position, comp->speed);
+        comp->position = new_pos;
 
         // Render stage
-        rendered_frame = render_frame(predictions);
+        rendered_frame = render_frame(comp);
 
         display_frame(rendered_frame);
 
@@ -60,7 +60,7 @@ void render_loop( void ) {
         #endif
         gettimeofday(&frame_end, NULL);
         total_frame_time = (frame_end.tv_usec - start.tv_usec);
-        printf("Frame rate: %d\n", 1000000 /(frame_end.tv_usec - start.tv_usec));
+        // printf("Frame rate: %d\n", 1000000 /(frame_end.tv_usec - start.tv_usec));
     }
 }
 
@@ -71,7 +71,17 @@ void clear_display( void ) {
 }
 
 void display_predictions( void ) {
-    predictions = initialize_text_component("CHAMPS: 20 mins    DOGGIE'S: 15 mins");
+    Color text_color;
+    text_color.red = 0;
+    text_color.green = 255;
+    text_color.blue = 0;
+    char* content = "CHAMPS: 20 mins    DOGGIE'S: 15 mins";
+    comp = initialize_component( TEXT, content, scroll_forward, &text_color, 0 );
+    render_loop();
+}
+
+void display_test( void ) {
+    // comp = initialize_image_component("./../images/arrow.png");
     render_loop();
 }
 
@@ -99,11 +109,15 @@ int main(int argc, char** argv) {
                 break;
             case 'P':
                 display_predictions();
+                break;
+            case 'T':
+                display_test();
+                break;
             default:                    // Otherwise error
                 printf("Unrecognised option '%c'\n", argv[args][1]);
                 printf("Options:\n"
                        "  -c     clear display\n"\
-                       "  -p     diplay predictions\n"\
+                       "  -p     diplay comp\n"\
                       );
                 return(1);
             }
@@ -111,18 +125,29 @@ int main(int argc, char** argv) {
     }
 }
 
-Component* initialize_text_component( char* content ) {
-    Component* predictions = malloc(COMPONENT_SIZE);
-    predictions->rast = malloc(FRAME_BUF_SIZE);
-    memset(predictions->rast, 0, FRAME_BUF_SIZE);
-    rasterize_text(FONT_PATH, content, predictions->rast);
-    predictions->animation = scroll_forward;
-    predictions->speed = 0.4;
+Component* initialize_component( COMP_TYPE type, char* content, Animation animation, Color* color, int layer ) {
+    Component* comp = malloc(COMPONENT_SIZE);
+    comp->rast = malloc(FRAME_BUF_SIZE);
+    memset(comp->rast, 0, FRAME_BUF_SIZE);
+    comp->animation = animation;
+    comp->speed = 0.45;
+    comp->brightness = 0.5;
     Point pos;
     pos.x = 0;
     pos.y = 0;
-    predictions->position = pos;
-    predictions->content = content;
-    predictions->layer = 0;
-    return predictions;
+    comp->position = pos;
+    comp->content = content;
+    comp->layer = layer;
+    switch (type) {
+        case TEXT:
+            rasterize_text(FONT_PATH, content, comp->rast);
+            comp->color_overlay = *color;
+            break;
+        case IMAGE:
+            rasterize_image(comp->rast, content);
+            break;
+        case BAR:
+            break;
+    }
+    return comp;
 }

@@ -18,10 +18,18 @@ extern const int FRAME_BUF_SIZE;
 
 extern const int COMPONENT_SIZE;
 
-// Renders given text to a frame buffer
+typedef enum {
+    TEXT,
+    IMAGE,
+    BAR
+} COMP_TYPE;
+
 int rasterize_text( char*      filename,
                     char*      text,
                     frame_buf* frame );
+
+void rasterize_image( frame_buf* frame,
+                      char *     image );
 
 typedef struct Point
 {
@@ -32,17 +40,27 @@ typedef struct Point
 // Animation that defines a component's movement
 typedef Point (*Animation)(Point, double);
 
+typedef struct
+{
+    unsigned char red;
+    unsigned char green;
+    unsigned char blue;
+} Color;
+
 typedef struct 
 {
     frame_buf*  rast;
     Animation   animation;
     double      speed;
+    Color       color_overlay;
+    double      brightness;
     Point       position;
     char*       content;
     int         layer;
 } Component;
 
-Component* initialize_text_component( char* content );
+Component* initialize_component( COMP_TYPE type, char* content, Animation animation, Color* color, int layer);
+
 
 frame_buf* render_frame( Component* comp );
 
