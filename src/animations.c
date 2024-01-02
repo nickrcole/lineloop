@@ -9,7 +9,7 @@ Nicholas Cole — 12/30/23
 #include "./../include/render_toolkit.h"
 #include "./../include/animations.h"
 
-const int BOB_INTENSITY = 10;
+const int BOB_INTENSITY = 25;
 int bob_status = BOB_INTENSITY;
 
 Point scroll_forward( Point pos, double speed ) {
@@ -35,7 +35,7 @@ Point scroll_backward( Point pos, double speed ) {
 }
 
 Point bob( Point pos, double speed ) {
-    if (bob_status % 2 != 0) {
+    if (bob_status % 5 != 0) {
         bob_status--;
         return pos;
     }
