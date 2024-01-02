@@ -10,6 +10,7 @@ Definitions for use by the rendering pipeline (not the driver)
 #define FRAME_BUF_WIDTH   294
 #define FRAME_BUF_HEIGHT   15
 #define LIMIT_FRAMERATE     0
+#define MAX_ANIMATIONS      2
 
 // Buffer that stores a frame
 typedef int frame_buf[294][15];
@@ -50,16 +51,22 @@ typedef struct
 typedef struct 
 {
     frame_buf*  rast;
-    Animation   animation;
+    Animation*  animation;
     double      speed;
     Color       color_overlay;
+    int         apply_color;
     double      brightness;
     Point       position;
     char*       content;
     int         layer;
 } Component;
 
-Component* initialize_component( COMP_TYPE type, char* content, Animation animation, Color* color, int layer);
+Component* initialize_component( COMP_TYPE  type, 
+                                 char*      content, 
+                                 Animation*  animation, 
+                                 int        num_anims, 
+                                 Color*     color, 
+                                 int        layer );
 
 
 frame_buf* render_frame( Component* comp );

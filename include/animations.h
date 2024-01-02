@@ -12,4 +12,10 @@ Nicholas Cole — 12/30/23
 
 Point scroll_forward( Point point, double speed );
 
+Point scroll_backward( Point point, double speed );
+
+Point blank( Point pos, double speed );
+
+Point bob( Point pos, double speed );
+
 #endif

@@ -44,8 +44,13 @@ void render_loop( void ) {
         gettimeofday(&start, NULL);
 
         // Prepare stage
-        Point new_pos = comp->animation(comp->position, comp->speed);
-        comp->position = new_pos;
+        for (int i = 0; i < MAX_ANIMATIONS; i++) {
+            if (!comp->animation[i]) {
+                break;
+            }
+            Point new_pos = comp->animation[i](comp->position, comp->speed);
+            comp->position = new_pos;
+        }
 
         // Render stage
         rendered_frame = render_frame(comp);
@@ -71,17 +76,27 @@ void clear_display( void ) {
 }
 
 void display_predictions( void ) {
+    int anim_count = 2;
     Color text_color;
     text_color.red = 0;
     text_color.green = 255;
     text_color.blue = 0;
     char* content = "CHAMPS: 20 mins    DOGGIE'S: 15 mins";
-    comp = initialize_component( TEXT, content, scroll_forward, &text_color, 0 );
+    Animation* animation = malloc(anim_count * sizeof(Animation));
+    animation[0] = bob;
+    animation[1] = scroll_forward;
+    comp = initialize_component( TEXT, content, animation, anim_count, &text_color, 0 );
     render_loop();
 }
 
 void display_test( void ) {
-    // comp = initialize_image_component("./../images/arrow.png");
+    int anim_count = 2;
+    char* content = "CHAMPS: 20 mins    DOGGIE'S: 15 mins";
+    Animation* animation = malloc(anim_count * sizeof(Animation));
+    // animation[0] = bob;
+    animation[0] = bob;
+    animation[1] = scroll_backward;
+    comp = initialize_component( BAR, "./../images/star.png", animation, anim_count, NULL, 0 );
     render_loop();
 }
 
@@ -125,11 +140,18 @@ int main(int argc, char** argv) {
     }
 }
 
-Component* initialize_component( COMP_TYPE type, char* content, Animation animation, Color* color, int layer ) {
+Component* initialize_component( COMP_TYPE type, char* content, Animation* animation, int num_anims, Color* color, int layer ) {
     Component* comp = malloc(COMPONENT_SIZE);
     comp->rast = malloc(FRAME_BUF_SIZE);
+    comp->animation = malloc(MAX_ANIMATIONS * sizeof(Animation));
     memset(comp->rast, 0, FRAME_BUF_SIZE);
-    comp->animation = animation;
+    for (int i = 0; i < MAX_ANIMATIONS; i++) {
+        if (i < num_anims) {
+            comp->animation[i] = animation[i];
+        } else {
+            comp->animation[i] = NULL;
+        }
+    }
     comp->speed = 0.45;
     comp->brightness = 0.5;
     Point pos;
@@ -138,15 +160,27 @@ Component* initialize_component( COMP_TYPE type, char* content, Animation animat
     comp->position = pos;
     comp->content = content;
     comp->layer = layer;
+    if (color) {
+        comp->color_overlay = *color;
+        comp->apply_color = 1;
+    } else {
+        comp->apply_color = 0;
+    }
     switch (type) {
         case TEXT:
             rasterize_text(FONT_PATH, content, comp->rast);
-            comp->color_overlay = *color;
             break;
         case IMAGE:
             rasterize_image(comp->rast, content);
             break;
         case BAR:
+            frame_buf* bar_rast = malloc(FRAME_BUF_SIZE);
+            int bitmap[294][15] = {
+                                     {0xFFFFFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},
+                                     {0xFFFFFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+                                  };
+            memcpy(bar_rast, &bitmap, FRAME_BUF_SIZE);
+            comp->rast = bar_rast;
             break;
     }
     return comp;

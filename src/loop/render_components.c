@@ -16,8 +16,9 @@ frame_buf* render_frame(Component* comp) {
     frame_buf* rast = comp->rast;
     int i, j, k;
     int offset = comp->position.x;
+    int y = comp->position.y;
 
-    if (1) {
+    if (comp->apply_color) {
         double brightness = comp->brightness;
         Color color_overlay; 
         color_overlay.red = comp->color_overlay.red * brightness;
@@ -27,6 +28,9 @@ frame_buf* render_frame(Component* comp) {
         for (i = 0; i < FRAME_BUF_WIDTH; i++) {
             j = (int) (i + comp->speed * offset) % FRAME_BUF_WIDTH;  // Increment 'j' by 2
             for (k = 0; k < FRAME_BUF_HEIGHT; k++) {
+                if (k + y >= FRAME_BUF_HEIGHT || k + y < 0) {
+                    continue;
+                }
                 float alpha = (float) (*rast)[i][k] / 0xFF;
                 int pixel = (color_overlay.red * alpha);
                 pixel <<= 8;
@@ -34,9 +38,9 @@ frame_buf* render_frame(Component* comp) {
                 pixel <<= 8;
                 pixel += (color_overlay.blue * alpha);
                 if ((*rast)[i][k]) {
-                    (*rendered_frame)[j][k] = pixel;
+                    (*rendered_frame)[j][k + y] = pixel;
                 } else {
-                    (*rendered_frame)[j][k] = 0x0;
+                    (*rendered_frame)[j][k + y] = 0x0;
                 }
             }
         }
@@ -44,7 +48,10 @@ frame_buf* render_frame(Component* comp) {
         for (i = 0; i < FRAME_BUF_WIDTH; i++) {
             j = (int) (i + comp->speed * offset) % FRAME_BUF_WIDTH;  // Increment 'j' by 2
             for (k = 0; k < FRAME_BUF_HEIGHT; k++) {
-                (*rendered_frame)[i][k] = (*rast)[i][k];
+                if (k + y >= FRAME_BUF_HEIGHT || k + y < 0) {
+                    continue;
+                }
+                (*rendered_frame)[j][k + y] = (*rast)[i][k];
             }
         }
     }
