@@ -11,8 +11,8 @@ Nicholas Cole — 12/30/23
 #include <stdlib.h>
 #include "./../../include/render_toolkit.h"
 
-frame_buf* render_frame(Component* comp) {
-    frame_buf* rendered_frame = malloc(FRAME_BUF_SIZE);
+void render_frame(Component* comp, frame_buf* rendered_frame) {
+    // frame_buf* rendered_frame = malloc(FRAME_BUF_SIZE);
     frame_buf* rast = comp->rast;
     int i, j, k;
     int offset = comp->position.x;
@@ -39,8 +39,6 @@ frame_buf* render_frame(Component* comp) {
                 pixel += (color_overlay.blue * alpha);
                 if ((*rast)[i][k]) {
                     (*rendered_frame)[j][k + y] = pixel;
-                } else {
-                    (*rendered_frame)[j][k + y] = 0x0;
                 }
             }
         }
@@ -65,7 +63,9 @@ frame_buf* render_frame(Component* comp) {
                 pixel += adjusted_color.green;
                 pixel <<= 8;
                 pixel += adjusted_color.blue;
-                (*rendered_frame)[j][k + y] = (*rast)[i][k] * comp->brightness;
+                if ((*rast)[i][k]) {
+                    (*rendered_frame)[j][k + y] = (*rast)[i][k] * comp->brightness;
+                }
             }
         }
     }

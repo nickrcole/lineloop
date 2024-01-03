@@ -44,6 +44,7 @@ void render_loop( void ) {
 
     while (1) {
         gettimeofday(&start, NULL);
+        memset(rendered_frame, 0, FRAME_BUF_SIZE);
 
         for (int j = 0; j < MAX_COMPONENTS; j++) {
             if (!comp[j].rast) {
@@ -59,11 +60,11 @@ void render_loop( void ) {
             }
 
             // Render stage
-            comp[j].frame = render_frame(comp);
+            render_frame(&comp[j], rendered_frame);
         }
 
         // Layer stage
-        rendered_frame = layer_components(comp);
+        // rendered_frame = layer_components(comp);
 
         display_frame(rendered_frame);
 
@@ -75,7 +76,7 @@ void render_loop( void ) {
         #endif
         gettimeofday(&frame_end, NULL);
         total_frame_time = (frame_end.tv_usec - start.tv_usec);
-        // printf("Frame rate: %d\n", 1000000 /(frame_end.tv_usec - start.tv_usec));
+        printf("Frame rate: %d\n", 1000000 /(frame_end.tv_usec - start.tv_usec));
     }
 }
 
@@ -104,17 +105,20 @@ void display_test( void ) {
     Animation* animation = malloc(anim_count * sizeof(Animation));
     // animation[0] = bob;
     // animation[0] = bar_jitter;
-    Color bar_color;
-    bar_color.red = 0;
-    bar_color.green = 255;
-    bar_color.blue = 0;
     animation[0] = scroll_backward;
-    for (int i = 0; i < NUM_BARS; i++) {
+    for (int i = 0; i < NUM_BARS - 1; i++) {
         Point pos;
         pos.x = 2*i;
         pos.y = 14;
-        comp[i] = *initialize_component( BAR, "./../images/star.png", animation, anim_count, &bar_color, 0, &pos );
+        comp[i] = *initialize_component( BAR, "./../images/star.png", animation, anim_count, NULL, 0, &pos );
     }
+    Color text_color;
+    text_color.red = 0;
+    text_color.green = 255;
+    text_color.blue = 0;
+    content = "CHAMPS: 20 mins    DOGGIE'S: 15 mins";
+    animation[0] = scroll_forward;
+    comp[NUM_BARS] = *initialize_component( TEXT, content, animation, anim_count, &text_color, 0, NULL );
     render_loop();
 }
 
@@ -129,7 +133,7 @@ void close_program( int signo ) {
 void initialize_audio() {
     double* bands = malloc(sizeof(double) * NUM_BARS);
     audio_reactive_anim_init(bands);
-    audio_init(bands);
+    // audio_init(bands);
 }
 
 void audio_reactive_init(pthread_t thread) {
@@ -182,7 +186,7 @@ int main(int argc, char** argv) {
 Component* initialize_component( COMP_TYPE type, char* content, Animation* animation, int num_anims, Color* color, int layer, Point* pos ) {
     Component* comp = malloc(COMPONENT_SIZE);
     comp->rast = malloc(FRAME_BUF_SIZE);
-    comp->frame = malloc(FRAME_BUF_SIZE);
+    // comp->frame = malloc(FRAME_BUF_SIZE);
     comp->animation = malloc(MAX_ANIMATIONS * sizeof(Animation));
     memset(comp->rast, 0, FRAME_BUF_SIZE);
     for (int i = 0; i < MAX_ANIMATIONS; i++) {
@@ -192,13 +196,16 @@ Component* initialize_component( COMP_TYPE type, char* content, Animation* anima
             comp->animation[i] = NULL;
         }
     }
-    comp->speed = 0.45;
+    comp->speed = 1;
     comp->brightness = 0.1;
     if (!pos) {
-        pos->x = 0;
-        pos->y = 0;
+        Point default_pos;
+        default_pos.x = 0;
+        default_pos.y = 0;
+        comp->position = default_pos;
+    } else {
+        comp->position = *pos;
     }
-    comp->position = *pos;
     comp->content = content;
     comp->layer = layer;
     if (color) {
