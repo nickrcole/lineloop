@@ -1,7 +1,7 @@
-/** @file paex_record.c
-    @ingroup examples_src
+/** @file audio_monitor.c
+    @date 1/2/24
     @brief Record input into an array; Save array to a file; Playback recorded data.
-    @author Phil Burk  http://www.softsynth.com
+    @author Phil Burk  http://www.softsynth.com and Nicholas Cole https://nicholascole.dev
 */
 /*
  * $Id$
@@ -43,11 +43,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "portaudio.h"
+#include <portaudio.h>
+#include <string.h>
+#include "./../../include/audio.h"
+#include "./../../include/render_toolkit.h"
+#include <fftw3.h>
 
 /* #define SAMPLE_RATE  (17932) // Test failure to open with this value. */
 #define SAMPLE_RATE  (44100)
-#define FRAMES_PER_BUFFER (512)
 #define NUM_SECONDS     (5)
 #define NUM_CHANNELS    (1)
 /* #define DITHER_FLAG     (paDitherOff) */
@@ -57,17 +60,9 @@
 
 /* Select sample format. */
 #define PA_SAMPLE_TYPE  paFloat32
-typedef float SAMPLE;
 #define SAMPLE_SILENCE  (0.0f)
 #define PRINTF_S_FORMAT "%.8f"
 
-typedef struct
-{
-    int          frameIndex;  /* Index into sample array. */
-    int          maxFrameIndex;
-    SAMPLE      *recordedSamples;
-}
-paTestData;
 
 /* This routine will be called by the PortAudio engine when audio is needed.
 ** It may be called at interrupt level on some machines so don't do anything
@@ -79,25 +74,23 @@ static int recordCallback( const void *inputBuffer, void *outputBuffer,
                            PaStreamCallbackFlags statusFlags,
                            void *userData )
 {
-    paTestData *data = (paTestData*)userData;
+    SAMPLE* audio_buf = (SAMPLE*) ((AUDIO_PACKAGE*)userData)->audio_buf;
+    SAMPLE* fft_buf = (SAMPLE*) ((AUDIO_PACKAGE*)userData)->fft_buf;
     const SAMPLE *rptr = (const SAMPLE*)inputBuffer;
-    SAMPLE *wptr = &data->recordedSamples[data->frameIndex * NUM_CHANNELS];
+    SAMPLE *wptr = audio_buf;
     long framesToCalc;
     long i;
     int finished;
-    unsigned long framesLeft = data->maxFrameIndex - data->frameIndex;
 
     (void) outputBuffer; /* Prevent unused variable warnings. */
     (void) timeInfo;
     (void) statusFlags;
     (void) userData;
-
-    framesToCalc = framesPerBuffer;
     finished = paContinue;
 
     if( inputBuffer == NULL )
     {
-        for( i=0; i<framesToCalc; i++ )
+        for( i=0; i<framesPerBuffer; i++ )
         {
             *wptr++ = SAMPLE_SILENCE;  /* left */
             if( NUM_CHANNELS == 2 ) *wptr++ = SAMPLE_SILENCE;  /* right */
@@ -105,33 +98,24 @@ static int recordCallback( const void *inputBuffer, void *outputBuffer,
     }
     else
     {
-        for( i=0; i<framesToCalc; i++ )
+        for( i=0; i<framesPerBuffer; i++ )
         {
             *wptr++ = *rptr++;  /* left */
             if( NUM_CHANNELS == 2 ) *wptr++ = *rptr++;  /* right */
         }
     }
-    data->frameIndex += framesToCalc;
+    memcpy(fft_buf, audio_buf, FRAMES_PER_BUFFER);
+    fft(fft_buf);
     return finished;
 }
 
-void audio_recorder_init(void) {
-
-}
-
-void audio_recorder_stop(void) {
-
-}
-
 /*******************************************************************/
-int main(void);
-int main(void)
-{
+
+int begin_audio_monitoring(AUDIO_PACKAGE* package) {
     PaStreamParameters  inputParameters,
                         outputParameters;
     PaStream*           stream;
     PaError             err = paNoError;
-    paTestData          data;
     int                 i;
     int                 totalFrames;
     int                 numSamples;
@@ -161,17 +145,31 @@ int main(void)
               FRAMES_PER_BUFFER,
               paClipOff,      /* we won't output out of range samples so don't bother clipping them */
               recordCallback,
-              &data );
+              package );
     if( err != paNoError ) goto done;
 
     err = Pa_StartStream( stream );
     if( err != paNoError ) goto done;
     printf("\n=== Now recording!! Please speak into the microphone. ===\n"); fflush(stdout);
 
-    while( ( err = Pa_IsStreamActive( stream ) ) == 1 )
+    while(  1 )
     {
-        Pa_Sleep(1000);
-        printf("index = %d\n", data.frameIndex ); fflush(stdout);
+        Pa_Sleep(500);
+        // max = 0;
+        // average = 0.0;
+        // for( i=0; i<FRAMES_PER_BUFFER; i++ )
+        // {
+        //     val = package->fft_buf[i];
+        //     if( val < 0 ) val = -val; /* ABS */
+        //     if( val > max )
+        //     {
+        //         max = val;
+        //     }
+        //     average += val;
+        // }
+        // average = average / (double)numSamples;
+        // printf("sample max amplitude = "PRINTF_S_FORMAT"\n", max );
+        // printf("sample average = %lf\n", average );
     }
     if( err < 0 ) goto done;
 
@@ -180,8 +178,6 @@ int main(void)
 
 done:
     Pa_Terminate();
-    if( data.recordedSamples )       /* Sure it is NULL or valid. */
-        free( data.recordedSamples );
     if( err != paNoError )
     {
         fprintf( stderr, "An error occurred while using the portaudio stream\n" );

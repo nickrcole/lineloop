@@ -51,7 +51,21 @@ frame_buf* render_frame(Component* comp) {
                 if (k + y >= FRAME_BUF_HEIGHT || k + y < 0) {
                     continue;
                 }
-                (*rendered_frame)[j][k + y] = (*rast)[i][k];
+                double brightness = comp->brightness;
+                Color current_color;
+                current_color.red = ((*rast)[i][k] & 0xFF0000) >> 16;
+                current_color.green = ((*rast)[i][k] & 0x00FF00) >> 8;
+                current_color.blue = ((*rast)[i][k] & 0x0000FF);
+                Color adjusted_color; 
+                adjusted_color.red = current_color.red * brightness;
+                adjusted_color.green = current_color.green * brightness;
+                adjusted_color.blue = current_color.blue * brightness;
+                int pixel = adjusted_color.red;
+                pixel <<= 8;
+                pixel += adjusted_color.green;
+                pixel <<= 8;
+                pixel += adjusted_color.blue;
+                (*rendered_frame)[j][k + y] = (*rast)[i][k] * comp->brightness;
             }
         }
     }
