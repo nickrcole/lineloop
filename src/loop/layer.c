@@ -1,17 +1,15 @@
-/*
-
-This stage is responsible for rendering each individual
-component
-
-Nicholas Cole — 12/30/23
-
-*/
+/**
+ * @file render_components.c
+ * @date 12/30/23
+ * @brief This stage is responsible for rendering each individual component
+ * @author Nicholas Cole https://nicholascole.dev
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "./../../include/render_toolkit.h"
 
-void render_frame(Component* comp, frame_buf* rendered_frame) {
+void layer(Component* comp, frame_buf* rendered_frame) {
     // frame_buf* rendered_frame = malloc(FRAME_BUF_SIZE);
     frame_buf* rast = comp->rast;
     int i, j, k;
@@ -37,6 +35,9 @@ void render_frame(Component* comp, frame_buf* rendered_frame) {
                 pixel += (color_overlay.green * alpha);
                 pixel <<= 8;
                 pixel += (color_overlay.blue * alpha);
+                if (pixel == 0x0) {
+                    continue;
+                }
                 if ((*rast)[i][k]) {
                     (*rendered_frame)[j][k + y] = pixel;
                 }
@@ -63,6 +64,9 @@ void render_frame(Component* comp, frame_buf* rendered_frame) {
                 pixel += adjusted_color.green;
                 pixel <<= 8;
                 pixel += adjusted_color.blue;
+                if (pixel == 0x0) {
+                    continue;
+                }
                 if ((*rast)[i][k]) {
                     (*rendered_frame)[j][k + y] = (*rast)[i][k] * comp->brightness;
                 }

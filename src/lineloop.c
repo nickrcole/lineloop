@@ -46,37 +46,33 @@ void render_loop( void ) {
         gettimeofday(&start, NULL);
         memset(rendered_frame, 0, FRAME_BUF_SIZE);
 
-        for (int j = 0; j < MAX_COMPONENTS; j++) {
-            if (!comp[j].rast) {
+        // Render Stage
+        render_components(comp);
+
+        for (int i = 0; i < MAX_COMPONENTS; i++) {
+            if (!comp[i].rast) {
                 continue;
             }
-            // Prepare stage
-            for (int i = 0; i < MAX_ANIMATIONS; i++) {
-                if (!comp[j].animation[i]) {
-                    break;
-                }
-                Point new_pos = comp[j].animation[i](comp[j].position, comp[j].speed);
-                comp[j].position = new_pos;
-            }
-
-            // Render stage
-            render_frame(&comp[j], rendered_frame);
+            // Layer Stage
+            layer(&comp[i], rendered_frame);
         }
-
-        // Layer stage
-        // rendered_frame = layer_components(comp);
 
         display_frame(rendered_frame);
 
         gettimeofday(&render_end, NULL);
+
         #if LIMIT_FRAMERATE
-        if (render_end.tv_usec - start.tv_usec >= 0) {
-            usleep(16666 - (render_end.tv_usec - start.tv_usec));  // Enforce framerate
+        // If the frame renders faster than the framerate allows, wait
+        suseconds_t target_frame_time = 1000000.0 / MAX_FRAMERATE;
+        suseconds_t render_time = render_end.tv_usec - start.tv_usec;
+        if (0 < render_time && render_time < target_frame_time) {
+            usleep(target_frame_time - render_time);
         }
         #endif
+
         gettimeofday(&frame_end, NULL);
         total_frame_time = (frame_end.tv_usec - start.tv_usec);
-        printf("Frame rate: %d\n", 1000000 /(frame_end.tv_usec - start.tv_usec));
+        // printf("Frame rate: %d\n", 1000000 / (frame_end.tv_usec - start.tv_usec));
     }
 }
 
@@ -106,19 +102,16 @@ void display_test( void ) {
     // animation[0] = bob;
     // animation[0] = bar_jitter;
     animation[0] = scroll_backward;
-    for (int i = 0; i < NUM_BARS - 1; i++) {
-        Point pos;
-        pos.x = 2*i;
-        pos.y = 14;
-        comp[i] = *initialize_component( BAR, "./../images/star.png", animation, anim_count, NULL, 0, &pos );
-    }
+    Point pos;
+    pos.x = 0;
+    pos.y = 0;
+    comp[0] = *initialize_component( BAR, "bars_component", animation, anim_count, NULL, 0, &pos );
     Color text_color;
-    text_color.red = 0;
+    text_color.red = 255;
     text_color.green = 255;
-    text_color.blue = 0;
-    content = "CHAMPS: 20 mins    DOGGIE'S: 15 mins";
+    text_color.blue = 255;
     animation[0] = scroll_forward;
-    comp[NUM_BARS] = *initialize_component( TEXT, content, animation, anim_count, &text_color, 0, NULL );
+    comp[1] = *initialize_component( TEXT, content, animation, anim_count, &text_color, 0, NULL );
     render_loop();
 }
 
@@ -196,12 +189,12 @@ Component* initialize_component( COMP_TYPE type, char* content, Animation* anima
             comp->animation[i] = NULL;
         }
     }
-    comp->speed = 1;
+    comp->speed = 0.5;
     comp->brightness = 0.1;
     if (!pos) {
         Point default_pos;
         default_pos.x = 0;
-        default_pos.y = 0;
+        default_pos.y = 1;
         comp->position = default_pos;
     } else {
         comp->position = *pos;
