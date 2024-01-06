@@ -47,7 +47,7 @@ void render_loop( void ) {
         memset(rendered_frame, 0, FRAME_BUF_SIZE);
 
         // Render Stage
-        render_components(comp);
+        render(comp);
 
         for (int i = 0; i < MAX_COMPONENTS; i++) {
             if (!comp[i].rast) {
@@ -105,7 +105,7 @@ void display_test( void ) {
     Point pos;
     pos.x = 0;
     pos.y = 0;
-    comp[0] = *initialize_component( BAR, "bars_component", animation, anim_count, NULL, 0, &pos );
+    comp[0] = *initialize_component( TEXT, "hello baby", animation, anim_count, NULL, 0, &pos );
     Color text_color;
     text_color.red = 255;
     text_color.green = 255;
@@ -189,7 +189,7 @@ Component* initialize_component( COMP_TYPE type, char* content, Animation* anima
             comp->animation[i] = NULL;
         }
     }
-    comp->speed = 0.5;
+    comp->speed = 0.45;
     comp->brightness = 0.1;
     if (!pos) {
         Point default_pos;

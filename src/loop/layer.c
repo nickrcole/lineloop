@@ -1,7 +1,7 @@
 /**
- * @file render_components.c
+ * @file layer.c
  * @date 12/30/23
- * @brief This stage is responsible for rendering each individual component
+ * @brief This stage layers each component to a final rendered frame
  * @author Nicholas Cole https://nicholascole.dev
  */
 
@@ -24,7 +24,8 @@ void layer(Component* comp, frame_buf* rendered_frame) {
         color_overlay.blue = comp->color_overlay.blue * brightness;
 
         for (i = 0; i < FRAME_BUF_WIDTH; i++) {
-            j = (int) (i + comp->speed * offset) % FRAME_BUF_WIDTH;  // Increment 'j' by 2
+            // j = (int) (i + comp->speed * offset) % FRAME_BUF_WIDTH;  // Increment 'j' by 2
+            j = (int) (i + offset) % FRAME_BUF_WIDTH;
             for (k = 0; k < FRAME_BUF_HEIGHT; k++) {
                 if (k + y >= FRAME_BUF_HEIGHT || k + y < 0) {
                     continue;
@@ -45,7 +46,8 @@ void layer(Component* comp, frame_buf* rendered_frame) {
         }
     } else {
         for (i = 0; i < FRAME_BUF_WIDTH; i++) {
-            j = (int) (i + comp->speed * offset) % FRAME_BUF_WIDTH;  // Increment 'j' by 2
+            // j = (int) (i + comp->speed * offset) % FRAME_BUF_WIDTH;  // Increment 'j' by 2
+            j = (int) (i + offset) % FRAME_BUF_WIDTH;
             for (k = 0; k < FRAME_BUF_HEIGHT; k++) {
                 if (k + y >= FRAME_BUF_HEIGHT || k + y < 0) {
                     continue;

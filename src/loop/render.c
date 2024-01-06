@@ -1,5 +1,5 @@
 /**
- * @file prepare_stage.c
+ * @file render.c
  * @date 12/30/23
  * @brief Updates rast and positions for components
  * @author Nicholas Cole https://nicholascole.dev
@@ -30,7 +30,11 @@ void rasterize_bars(frame_buf* rast) {
     }
 }
 
-void render_components(Component* comp) {
+void render_component(Component* comp) {
+    
+}
+
+void render(Component* comp) {
     for (int i = 0; i < MAX_COMPONENTS; i++) {
         if (!comp[i].rast) {
             continue;

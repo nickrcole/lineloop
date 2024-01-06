@@ -15,10 +15,10 @@ int anim_iter = 0;
 Point scroll_forward( Point pos, double speed ) {
     Point new_pos;
     new_pos.y = pos.y;        // No change in the y direction
-    if ( pos.x == 0 ) {       // Decrement x and account for rollover
-        new_pos.x = 294 / speed;
+    if ( (int) pos.x == 0 ) {       // Decrement x and account for rollover
+        new_pos.x = 294; /// speed;
     } else {
-        new_pos.x = pos.x - 1;
+        new_pos.x = pos.x - (1 * speed);
     }
     return new_pos;
 }
@@ -26,10 +26,10 @@ Point scroll_forward( Point pos, double speed ) {
 Point scroll_backward( Point pos, double speed ) {
     Point new_pos;
     new_pos.y = pos.y;        // No change in the y direction
-    if ( pos.x == 294 / speed ) {       // Decrement x and account for rollover
+    if ( (int) pos.x == 294 ) {       // Decrement x and account for rollover
         new_pos.x = 0;
     } else {
-        new_pos.x = pos.x + 1;
+        new_pos.x = pos.x + (1 * speed);
     }
     return new_pos;
 }
