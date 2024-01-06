@@ -12,7 +12,7 @@
 #define SAMPLE_RATE        (44100)
 #define MAX_BUFFER_TIME          1
 
-void audio_init( double* bands ) {
+void audio_driver_init( double* bands ) {
     // double* bands = malloc(sizeof(double) * NUM_BARS);
     audio_processor_init(bands, NUM_BARS);
 

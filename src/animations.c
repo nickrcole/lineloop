@@ -59,11 +59,3 @@ Point bar_jitter( Point pos, double speed ) {
 Point blank( Point pos, double speed ) {
     return pos;
 }
-
-void audio_reactive_anim_init(double* band_buf) {
-    bands_ptr = band_buf;
-}
-
-void anim_iter_reset(void) {
-    anim_iter = 0;
-}

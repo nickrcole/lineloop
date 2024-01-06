@@ -10,23 +10,49 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
+#include "./../../include/render_toolkit.h"
 #include "./../../include/audio.h"
 
-#define SAMPLE_RATE 44100
+#define SAMPLE_RATE          44100
+#define SPECTRUM_PERCENTAGE   0.15
 double* bands;
+BarData* bars;
 int NUM_BANDS;
 
-void splitIntoBands(fftw_complex* fftResult, int numBands) {
-    // Calculate the size of each band
-    int bandSize = FRAMES_PER_BUFFER / numBands;
+void attach_bar_components(BarData* bars_buf) {
+    bars = bars_buf;
+}
 
-    // Process each band
-    // fputs("\033c", stdout);
+float normalize(double* temp_buf) {
+    float max = temp_buf[0];
+    for (int i = 1; i < NUM_BARS; i++) {
+        if (temp_buf[i] > max) {
+            max = temp_buf[i];
+        }
+    }
+
+    for (int i = 0; i < NUM_BARS; i++) {
+        temp_buf[i] = temp_buf[i] / max;
+    }
+
+    return max;
+}
+
+// Only about the first 15% of the spectrum is relevant
+void splitIntoBands(fftw_complex* fftResult, int numBands) {
+    // Calculate the size of the relevant spectrum
+    int relevantSize = FRAMES_PER_BUFFER * SPECTRUM_PERCENTAGE;
+
+    // Calculate the size of each band in the relevant spectrum
+    int bandSize = relevantSize / numBands;
+
+    // Process each band in the relevant spectrum
     double average = 0.0;
     for (int band = 0; band < numBands; band++) {
         double bandIntensity = 0.0;
 
-        // Calculate the intensity in the current band
+        // Calculate the intensity in the current band of the relevant spectrum
         for (int i = band * bandSize; i < (band + 1) * bandSize; i++) {
             double magnitude = sqrt(fftResult[i][0] * fftResult[i][0] + fftResult[i][1] * fftResult[i][1]);
             bandIntensity += magnitude;
@@ -34,33 +60,16 @@ void splitIntoBands(fftw_complex* fftResult, int numBands) {
 
         // Normalize the intensity and print the result
         bandIntensity /= bandSize;
-        // printf("Band %d intensity: %f\n", band + 1, bandIntensity);
-
         average += bandIntensity;
         bands[band] = bandIntensity * 100;
-        // printf("%f ", bands[band]);
     }
-    // printf("\n");
-    // average /= numBands;
-    // for (int band = 0; band < numBands; band++) {
-    //   if (bands[band] < (2 * average)) {
-    //     bands[band] *= 20;
-    //   }
-    //   double scaled_intensity = bands[band] * 50.0;  // Adjust the scale factor as needed
-    //   int num_hashes = (int)scaled_intensity;
-    //     if (num_hashes > 50) {
-    //         num_hashes = 50;
-    //     }
-    //     printf("%f ", scaled_intensity);
-
-    //     // Print the "#" characters
-    //     // for (int i = 0; i < num_hashes; i++) {
-    //     //     printf("#");
-    //     // }
-
-    //     // printf("\n");
-    // }
-    // printf("\n");
+    double* temp_buf = malloc(sizeof(double) * NUM_BARS);
+    memcpy(temp_buf, bands, sizeof(double) * NUM_BARS);
+    normalize(temp_buf);
+    for (int band = 0; band < numBands; band++) {
+        bars[band].last_height = bars[band].height;
+        bars[band].height = 14 * temp_buf[band];
+    }
 }
 
 void fft(SAMPLE* fft_buf) {

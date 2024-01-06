@@ -47,15 +47,7 @@ void render_loop( void ) {
         memset(rendered_frame, 0, FRAME_BUF_SIZE);
 
         // Render Stage
-        render(comp);
-
-        for (int i = 0; i < MAX_COMPONENTS; i++) {
-            if (!comp[i].rast) {
-                continue;
-            }
-            // Layer Stage
-            layer(&comp[i], rendered_frame);
-        }
+        render(comp, rendered_frame);
 
         display_frame(rendered_frame);
 
@@ -91,13 +83,17 @@ void display_predictions( void ) {
     char* content = "CHAMPS: 20 mins    DOGGIE'S: 15 mins";
     Animation* animation = malloc(anim_count * sizeof(Animation));
     animation[0] = scroll_forward;
-    comp[0] = *initialize_component( TEXT, content, animation, anim_count, &text_color, 0, NULL );
+    comp[0] = *initialize_component( TEXT, content, animation, anim_count, &text_color, NULL );
     render_loop();
 }
 
 void display_test( void ) {
     int anim_count = 1;
     char* content = "CHAMPS: 20 mins    DOGGIE'S: 15 mins";
+    Color *text_color_1 = malloc(sizeof(Color));
+    text_color_1->red = 0;
+    text_color_1->green = 0;
+    text_color_1->blue = 0xFF;
     Animation* animation = malloc(anim_count * sizeof(Animation));
     // animation[0] = bob;
     // animation[0] = bar_jitter;
@@ -105,13 +101,15 @@ void display_test( void ) {
     Point pos;
     pos.x = 0;
     pos.y = 0;
-    comp[0] = *initialize_component( TEXT, "hello baby", animation, anim_count, NULL, 0, &pos );
-    Color text_color;
-    text_color.red = 255;
-    text_color.green = 255;
-    text_color.blue = 255;
+    comp[0] = *initialize_component( BAR, "bars_component", animation, anim_count, NULL, &pos );
     animation[0] = scroll_forward;
-    comp[1] = *initialize_component( TEXT, content, animation, anim_count, &text_color, 0, NULL );
+    Color* text_color_2 = malloc(sizeof(Color));
+    text_color_2->red = 0xFF;
+    text_color_2->green = 0xFF;
+    text_color_2->blue = 0xFF;
+    // comp[1] = *initialize_component( TEXT, content, animation, 1, text_color_2, NULL );
+    free(text_color_1);
+    free(text_color_2);
     render_loop();
 }
 
@@ -123,15 +121,15 @@ void close_program( int signo ) {
     }
 }
 
-void initialize_audio() {
+void audio_init_container() {
     double* bands = malloc(sizeof(double) * NUM_BARS);
-    audio_reactive_anim_init(bands);
-    // audio_init(bands);
+    audio_reactive_init(bands);
+    audio_driver_init(bands);
 }
 
-void audio_reactive_init(pthread_t thread) {
+void audio_init(pthread_t thread) {
     pthread_t audio_thread;
-    pthread_create(&thread, NULL, initialize_audio, NULL);
+    pthread_create(&thread, NULL, audio_init_container, NULL);
 }
 
 int main(int argc, char** argv) {
@@ -140,7 +138,7 @@ int main(int argc, char** argv) {
     pthread_t loop_thread;
     pthread_t audio_thread;
     driver_init();
-    audio_reactive_init(audio_thread);
+    audio_init(audio_thread);
     comp = malloc(MAX_COMPONENTS * sizeof(Component));
     memset(comp, 0, MAX_COMPONENTS * sizeof(Component));
     while (argc > ++args)               // Process command-line args
@@ -176,7 +174,7 @@ int main(int argc, char** argv) {
     pthread_join(audio_thread, NULL);
 }
 
-Component* initialize_component( COMP_TYPE type, char* content, Animation* animation, int num_anims, Color* color, int layer, Point* pos ) {
+Component* initialize_component( COMP_TYPE type, char* content, Animation* animation, int num_anims, Color* color, Point* pos ) {
     Component* comp = malloc(COMPONENT_SIZE);
     comp->rast = malloc(FRAME_BUF_SIZE);
     // comp->frame = malloc(FRAME_BUF_SIZE);
@@ -200,7 +198,6 @@ Component* initialize_component( COMP_TYPE type, char* content, Animation* anima
         comp->position = *pos;
     }
     comp->content = content;
-    comp->layer = layer;
     if (color) {
         comp->color_overlay = *color;
         comp->apply_color = 1;
@@ -209,19 +206,16 @@ Component* initialize_component( COMP_TYPE type, char* content, Animation* anima
     }
     switch (type) {
         case TEXT:
-            rasterize_text(FONT_PATH, content, comp->rast);
+            rasterize_text(FONT_PATH, content, comp->rast, comp->color_overlay, comp->brightness);
             break;
         case IMAGE:
             rasterize_image(comp->rast, content);
             break;
         case BAR:
             frame_buf* bar_rast = malloc(FRAME_BUF_SIZE);
-            int bitmap[294][15] = {
-                                     {0xFFFFFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},
-                                     {0xFFFFFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
-                                  };
-            memcpy(bar_rast, &bitmap, FRAME_BUF_SIZE);
-            comp->rast = bar_rast;
+            BarData* bars = malloc(sizeof(BarData) * NUM_BARS);
+            comp->comp_data = bars;
+            attach_bar_components((BarData*) comp->comp_data);     // Provides audio driver with the bar data array
             break;
     }
     return comp;

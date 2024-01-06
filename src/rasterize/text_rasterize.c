@@ -76,7 +76,9 @@ void flip_bitmap( frame_buf* frame ) {
 int
 rasterize_text( char*      filename,
                 char*      text,
-                frame_buf* frame)
+                frame_buf* frame,
+                Color      color,
+                double     brightness)
 {
   FT_Library    library;
   FT_Face       face;
@@ -138,7 +140,49 @@ rasterize_text( char*      filename,
   FT_Done_Face    ( face );
   FT_Done_FreeType( library );
 
+  apply_color(frame, color);
+  apply_brightness(frame, brightness);
+
   return 0;
+}
+
+void apply_color(frame_buf* rast, Color color) {
+  int i, j;
+  for (i = 0; i < FRAME_BUF_WIDTH; i++) {
+    for (j = 0; j < FRAME_BUF_HEIGHT; j++) {
+      float alpha = (float) (*rast)[i][j] / 0xFF;
+      int pixel = (color.red * alpha);
+      pixel <<= 8;
+      pixel += (color.green * alpha);
+      pixel <<= 8;
+      pixel += (color.blue * alpha);
+      if ((*rast)[i][j]) {
+          (*rast)[i][j] = pixel;
+      }
+    }
+  }
+}
+
+void apply_brightness(frame_buf* frame, double brightness) {
+  int i, j;
+  for (i = 0; i < FRAME_BUF_WIDTH; i++) {
+    for (j = 0; j < FRAME_BUF_HEIGHT; j++) {
+      int current_pixel = (*frame)[i][j];
+      if (!current_pixel) {
+        continue;
+      }
+      Color color;
+      color.red = (current_pixel & 0xFF0000) >> 16;
+      color.green = (current_pixel & 0x00FF00) >> 8;
+      color.blue = (current_pixel & 0x0000FF);
+      int pixel = color.red * brightness;
+      pixel <<= 8;
+      pixel += color.green * brightness;
+      pixel <<= 8;
+      pixel += color.blue * brightness;
+      (*frame)[i][j] = pixel;
+    }
+  }
 }
 
 /* EOF */
