@@ -62,18 +62,30 @@ void clear_display( void ) {
 
 void display_predictions( void ) {
     int anim_count = 1;
-    Color text_color;
-    text_color.red = 0;
-    text_color.green = 255;
-    text_color.blue = 0;
-    char* content = "CHAMPS: 20 mins    DOGGIE'S: 15 mins";
+    char* content = "CHAMPS: 20 mins    DOGGIE'S: 15 mins     ";
     Animation* animation = malloc(anim_count * sizeof(Animation));
     animation[0] = scroll_forward;
-    comp[0] = *initialize_component( TEXT, content, animation, anim_count, &text_color, NULL );
+    Color* text_color_2 = malloc(sizeof(Color));
+    text_color_2->red = 0xFF;
+    text_color_2->green = 0xFF;
+    text_color_2->blue = 0xFF;
+    comp[1] = *initialize_component( TEXT, content, animation, 1, text_color_2, NULL );
+    free(text_color_2);
     render_loop();
 }
 
-void display_test( void ) {
+void display_bars(void) {
+    int anim_count = 1;
+    Animation* animation = malloc(anim_count * sizeof(Animation));
+    animation[0] = scroll_backward;
+    Point pos;
+    pos.x = 0;
+    pos.y = 0;
+    comp[0] = *initialize_component( BAR, "bars_component", animation, anim_count, NULL, &pos );
+    render_loop();
+}
+
+void display_all( void ) {
     int anim_count = 1;
     /* TEXT LENGTH: "CHAMPS: 20 mins    DOGGIE'S: 15 mins     "*/
     char* content = "CHAMPS: 20 mins    DOGGIE'S: 15 mins     ";
@@ -82,8 +94,6 @@ void display_test( void ) {
     text_color_1->green = 0;
     text_color_1->blue = 0xFF;
     Animation* animation = malloc(anim_count * sizeof(Animation));
-    // animation[0] = bob;
-    // animation[0] = bar_jitter;
     animation[0] = scroll_backward;
     Point pos;
     pos.x = 0;
@@ -139,19 +149,30 @@ int main(int argc, char** argv) {
                 exit(0);
                 break;
             case 'P':
-                display_predictions();
-                break;
-            case 'T':
-                if (pthread_create(&loop_thread, NULL, display_test, NULL) != 0) {
+                if (pthread_create(&loop_thread, NULL, display_predictions, NULL) != 0) {
                     fprintf(stderr, "Error creating thread\n");
-                    return 1; // Return an error code
+                    return 1;
+                }
+                break;
+            case 'B':
+                if (pthread_create(&loop_thread, NULL, display_bars, NULL) != 0) {
+                    fprintf(stderr, "Error creating thread\n");
+                    return 1;
+                }
+                break;
+            case 'A':
+                if (pthread_create(&loop_thread, NULL, display_all, NULL) != 0) {
+                    fprintf(stderr, "Error creating thread\n");
+                    return 1;
                 }
                 break;
             default:                    // Otherwise error
                 printf("Unrecognised option '%c'\n", argv[args][1]);
                 printf("Options:\n"
                        "  -c     clear display\n"\
-                       "  -p     diplay comp\n"\
+                       "  -p     diplay predictions\n"\
+                       "  -b     display bars\n"\
+                       "  -a     display both\n"\
                       );
                 return(1);
             }

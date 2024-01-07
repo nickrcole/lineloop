@@ -66,6 +66,9 @@ void splitIntoBands(fftw_complex* fftResult, int numBands) {
     double* temp_buf = malloc(sizeof(double) * NUM_BARS);
     memcpy(temp_buf, bands, sizeof(double) * NUM_BARS);
     normalize(temp_buf);
+    if (!bars) {
+        return;
+    }
     for (int band = 0; band < numBands; band++) {
         bars[band].last_height = bars[band].height;
         bars[band].height = 14 * temp_buf[band];
