@@ -44,21 +44,21 @@ draw_bitmap( FT_Bitmap*  bitmap,
   }
 }
 
-// void
-// show_image( frame_buf* frame )
-// {
-//   int  i, j;
+void
+show_image( frame_buf* frame )
+{
+  int  i, j;
 
 
-//   for ( i = 0; i < HEIGHT; i++ )
-//   {
-//     for ( j = 0; j < WIDTH; j++ )
-//       putchar( (*frame)[i][j] == 0 ? ' '
-//                                 : (*frame)[i][j] < 128 ? '+'
-//                                                     : '*' );
-//     putchar( '\n' );
-//   }
-// }
+  for ( i = 0; i < HEIGHT; i++ )
+  {
+    for ( j = 0; j < WIDTH; j++ )
+      putchar( (*frame)[i][j] == 0 ? ','
+                                : (*frame)[i][j] < 128 ? '+'
+                                                    : '*' );
+    putchar( '\n' );
+  }
+}
 
 void flip_bitmap( frame_buf* frame ) {
     int i, j, k;
@@ -110,8 +110,8 @@ rasterize_text( char*      filename,
   matrix.yy = (FT_Fixed)( cos( angle ) * 0x10000L );
 
   /* the pen position in 26.6 cartesian space coordinates; */
-  pen.x = 3 * 64;
-  pen.y = ( target_height - 2 ) * 64;
+  pen.x = 4 * 64;
+  pen.y = ( target_height + 1 ) * 64;
 
   for ( n = 0; n < num_chars; n++ )
   {
@@ -142,6 +142,7 @@ rasterize_text( char*      filename,
 
   apply_color(frame, color);
   apply_brightness(frame, brightness);
+  // show_image(frame);
 
   return 0;
 }

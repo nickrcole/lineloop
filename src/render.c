@@ -10,8 +10,33 @@
 #include <string.h>
 #include "./../../include/render_toolkit.h"
 
-void layer(Component* comp, frame_buf* rendered_frame) {
-    frame_buf* rast = comp->rast;
+void center_image(frame_buf* input, frame_buf* frame, double scale_fact) {
+  memset(frame, 0, FRAME_BUF_SIZE);
+  int y_adjust = 1 / scale_fact;
+  int x_adjust = ((1 - scale_fact) / 2) * 294;
+  for (int i = 0; i < (FRAME_BUF_WIDTH * scale_fact); i++) {
+        for (int j = 0; j < FRAME_BUF_HEIGHT; j++) {
+            (*frame)[i + x_adjust][j + y_adjust] = (*input)[i][j];
+        }
+    }
+}
+
+void scale_image(frame_buf* input, frame_buf* frame, double scale_fact) {
+    memset(frame, 0, FRAME_BUF_SIZE);
+    int scaled_width = (int) (294 * scale_fact);
+    int scaled_height = (int) (14 * scale_fact);
+
+    for (int i = 0; i < scaled_width; i++) {
+        for (int j = 0; j < scaled_height; j++) {
+            int originalX = (int) (j / scale_fact);
+            int originalY = (int) (i / scale_fact);
+            // printf("(%d, %d)\n", originalX, originalY);
+            (*frame)[i][j] = (*input)[originalY][originalX];
+        }
+    }
+}
+
+void layer(Component* comp, frame_buf* rast, frame_buf* rendered_frame) {
     int i, j, k;
     int offset = comp->position.x;
     int y = comp->position.y;
@@ -31,12 +56,24 @@ void layer(Component* comp, frame_buf* rendered_frame) {
 }
 
 void render(Component* comp, frame_buf* rendered_frame) {
+    frame_buf* component_frame = malloc(FRAME_BUF_SIZE);
     for (int i = 0; i < MAX_COMPONENTS; i++) {
         if (!comp[i].rast) {
             continue;
         }
-        if (strcmp(comp[i].content, "bars_component") == 0) {
-            rasterize_bars(&comp[i]);
+        memcpy(component_frame, comp[i].rast, FRAME_BUF_SIZE);
+        switch(comp[i].type) {
+            case BAR:
+                rasterize_bars(&comp[i], component_frame);
+                break;
+            case TEXT:
+                frame_buf* temp_buf = malloc(FRAME_BUF_SIZE);
+                // memcpy(temp_buf, component_frame, FRAME_BUF_SIZE);
+                // scale_image(temp_buf, component_frame, scale);
+                // memcpy(temp_buf, component_frame, FRAME_BUF_SIZE);
+                // center_image(temp_buf, component_frame, scale);
+                // free(temp_buf);
+                break;
         }
         for (int j = 0; j < MAX_ANIMATIONS; j++) {
             if (!comp[i].animation[j]) {
@@ -46,7 +83,8 @@ void render(Component* comp, frame_buf* rendered_frame) {
             comp[i].position = new_pos;
         }
 
-        layer(&comp[i], rendered_frame);
+        layer(&comp[i], component_frame, rendered_frame);
     }
+    free(component_frame);
 }
 

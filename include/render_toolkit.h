@@ -9,8 +9,11 @@ Definitions for use by the rendering pipeline (not the driver)
 
 #define FRAME_BUF_WIDTH   294
 #define FRAME_BUF_HEIGHT   15
-#define LIMIT_FRAMERATE     0
+#define MAX_FRAMERATE      80
+#define LIMIT_FRAMERATE     1
 #define MAX_ANIMATIONS      2
+#define MAX_COMPONENTS    150
+#define NUM_BARS           21
 
 // Buffer that stores a frame
 typedef int frame_buf[294][15];
@@ -25,17 +28,13 @@ typedef enum {
     BAR
 } COMP_TYPE;
 
-int rasterize_text( char*      filename,
-                    char*      text,
-                    frame_buf* frame );
-
 void rasterize_image( frame_buf* frame,
                       char *     image );
 
 typedef struct Point
 {
-    int x;
-    int y;
+    double x;
+    double y;
 } Point;
 
 // Animation that defines a component's movement
@@ -58,22 +57,40 @@ typedef struct
     double      brightness;
     Point       position;
     char*       content;
-    int         layer;
+    COMP_TYPE   type;
+    void*       comp_data;
 } Component;
+
+typedef struct
+{
+    float        height;
+    float        last_height;
+} BarData;
 
 Component* initialize_component( COMP_TYPE  type, 
                                  char*      content, 
-                                 Animation*  animation, 
+                                 Animation* animation, 
                                  int        num_anims, 
                                  Color*     color, 
-                                 int        layer );
+                                 Point*     pos );
 
+int rasterize_text( char*      filename,
+                    char*      text,
+                    frame_buf* frame,
+                    Color      color,
+                    double     brightness );
 
-frame_buf* render_frame( Component* comp );
+void rasterize_bars(Component* comp, frame_buf* frame);
+
+void render(Component* comp, frame_buf* rendered_frame);
 
 void show_image( frame_buf* frame );
 
 void display_frame( frame_buf* frame );
+
+void audio_reactive_init(double* bands);
+
+void attach_bar_components(BarData* bars_buf);
 
 int driver_init( void );
 

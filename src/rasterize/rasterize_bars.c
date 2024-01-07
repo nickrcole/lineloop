@@ -35,15 +35,14 @@ int get_max(int a, int b) {
     return (a > b) ? a : b;
 }
 
-void rasterize_bars(Component* bars) {
-    frame_buf* rast = bars->rast;
+void rasterize_bars(Component* bars, frame_buf* rast) {
     int height;
     memset(rast, 0, sizeof(FRAME_BUF_SIZE));
     for (int i = 0; i < NUM_BARS; i++) {
-        // double new_height = ((BarData*) bars->comp_data)[i].height;
-        // double last_height = ((BarData*) bars->comp_data)[i].last_height;
-        // height = (int) (last_height + (new_height - last_height) / 4);
-        height = ((BarData*) bars->comp_data)[i].height;
+        double new_height = ((BarData*) bars->comp_data)[i].height;
+        double last_height = ((BarData*) bars->comp_data)[i].last_height;
+        height = (int) (last_height + (new_height - last_height) / 4);
+        // height = ((BarData*) bars->comp_data)[i].height;
         for (int k = 0; k < FRAME_BUF_HEIGHT; k++) {
             if (k > 14 - height) {
                 unsigned int pixel = get_pixel(height);

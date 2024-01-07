@@ -150,26 +150,11 @@ int begin_audio_monitoring(AUDIO_PACKAGE* package) {
 
     err = Pa_StartStream( stream );
     if( err != paNoError ) goto done;
-    printf("\n=== Now recording!! Please speak into the microphone. ===\n"); fflush(stdout);
+    printf("Audio driver active\n"); fflush(stdout);
 
     while(  1 )
     {
         Pa_Sleep(500);
-        // max = 0;
-        // average = 0.0;
-        // for( i=0; i<FRAMES_PER_BUFFER; i++ )
-        // {
-        //     val = package->fft_buf[i];
-        //     if( val < 0 ) val = -val; /* ABS */
-        //     if( val > max )
-        //     {
-        //         max = val;
-        //     }
-        //     average += val;
-        // }
-        // average = average / (double)numSamples;
-        // printf("sample max amplitude = "PRINTF_S_FORMAT"\n", max );
-        // printf("sample average = %lf\n", average );
     }
     if( err < 0 ) goto done;
 

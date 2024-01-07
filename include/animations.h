@@ -16,6 +16,6 @@ Point scroll_backward( Point point, double speed );
 
 Point blank( Point pos, double speed );
 
-Point bob( Point pos, double speed );
+Point bar_jitter( Point pos, double speed );
 
 #endif

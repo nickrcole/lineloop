@@ -22,20 +22,6 @@ const int COMPONENT_SIZE = sizeof(Component);
 char* FONT_PATH = "/home/pi/lineloop/fonts/TNR.ttf";
 Component* comp;
 
-void show_image( frame_buf* frame )
-{
-  int  i, j;
-
-  for ( i = 0; i < FRAME_BUF_WIDTH; i++ )
-  {
-    for ( j = 0; j < FRAME_BUF_HEIGHT; j++ )
-      putchar( (*frame)[i][j] == 0 ? ' '
-                                   : (*frame)[i][j] < 128 ? '+'
-                                                          : '*' );
-    putchar( '\n' );
-  }
-}
-
 void render_loop( void ) {
     struct timeval start, render_end, frame_end;
     double total_frame_time;
@@ -89,7 +75,8 @@ void display_predictions( void ) {
 
 void display_test( void ) {
     int anim_count = 1;
-    char* content = "CHAMPS: 20 mins    DOGGIE'S: 15 mins";
+    /* TEXT LENGTH: "CHAMPS: 20 mins    DOGGIE'S: 15 mins     "*/
+    char* content = "CHAMPS: 20 mins    DOGGIE'S: 15 mins     ";
     Color *text_color_1 = malloc(sizeof(Color));
     text_color_1->red = 0;
     text_color_1->green = 0;
@@ -107,7 +94,7 @@ void display_test( void ) {
     text_color_2->red = 0xFF;
     text_color_2->green = 0xFF;
     text_color_2->blue = 0xFF;
-    // comp[1] = *initialize_component( TEXT, content, animation, 1, text_color_2, NULL );
+    comp[1] = *initialize_component( TEXT, content, animation, 1, text_color_2, NULL );
     free(text_color_1);
     free(text_color_2);
     render_loop();
@@ -187,12 +174,13 @@ Component* initialize_component( COMP_TYPE type, char* content, Animation* anima
             comp->animation[i] = NULL;
         }
     }
-    comp->speed = 0.45;
+    comp->type = type;
+    comp->speed = 0.4;
     comp->brightness = 0.1;
     if (!pos) {
         Point default_pos;
         default_pos.x = 0;
-        default_pos.y = 1;
+        default_pos.y = 2;
         comp->position = default_pos;
     } else {
         comp->position = *pos;
@@ -215,6 +203,7 @@ Component* initialize_component( COMP_TYPE type, char* content, Animation* anima
             frame_buf* bar_rast = malloc(FRAME_BUF_SIZE);
             BarData* bars = malloc(sizeof(BarData) * NUM_BARS);
             comp->comp_data = bars;
+            comp->speed = 0.2;
             attach_bar_components((BarData*) comp->comp_data);     // Provides audio driver with the bar data array
             break;
     }
