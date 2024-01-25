@@ -12,6 +12,8 @@
 double* bands_ptr;
 int anim_iter = 0;
 
+double master_speed;
+
 Point scroll_forward( Point pos, double speed ) {
     Point new_pos;
     new_pos.y = pos.y;        // No change in the y direction
@@ -58,4 +60,12 @@ Point bar_jitter( Point pos, double speed ) {
 
 Point blank( Point pos, double speed ) {
     return pos;
+}
+
+double ease_in_out(double speed) {
+
+}
+
+void time_map_init(double speed) {
+    master_speed = speed;
 }

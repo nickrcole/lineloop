@@ -44,7 +44,7 @@ void rasterize_bars(Component* bars, frame_buf* rast) {
         height = (int) (last_height + (new_height - last_height) / 4);
         // height = ((BarData*) bars->comp_data)[i].height;
         for (int k = 0; k < FRAME_BUF_HEIGHT; k++) {
-            if (k > 14 - height) {
+            if (k > 13 - height) {
                 unsigned int pixel = get_pixel(height);
                 for (int j = 0; j < BAR_WIDTH; j++) {
                     (*rast)[2*BAR_WIDTH*i + j][k] = pixel;

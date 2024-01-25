@@ -40,6 +40,8 @@ typedef struct Point
 // Animation that defines a component's movement
 typedef Point (*Animation)(Point, double);
 
+typedef double (*time_map)(double);
+
 typedef struct
 {
     unsigned char red;
@@ -59,6 +61,7 @@ typedef struct
     char*       content;
     COMP_TYPE   type;
     void*       comp_data;
+    time_map*   time_map;
 } Component;
 
 typedef struct
