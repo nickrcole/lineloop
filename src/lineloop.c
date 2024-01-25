@@ -60,6 +60,27 @@ void clear_display( void ) {
     display_frame(clear);
 }
 
+void update_component(void) {
+    while (1) {
+        for (int i = 0; i < MAX_COMPONENTS; i++) {
+            Component* current_comp = &comp[i];
+            if (!current_comp->rast) {
+                break;
+            }
+            if (current_comp->type == TEXT) {
+                char* original_content = malloc(strlen(current_comp->content) + 1);
+                strcpy(original_content, current_comp->content);
+                get_preds(current_comp);
+                if (strcmp(original_content, current_comp->content) != 0) {
+                    memset(current_comp->rast, 0, FRAME_BUF_SIZE);
+                    rasterize_text(FONT_PATH, current_comp->content, current_comp->rast, current_comp->color_overlay, current_comp->brightness);
+                }
+            }
+        }
+        usleep(1000000);
+    }
+}
+
 void display_predictions( void ) {
     int anim_count = 1;
     char* content = "CHAMPS: 20 mins    DOGGIE'S: 15 mins     ";
@@ -86,9 +107,11 @@ void display_bars(void) {
 }
 
 void display_all( void ) {
+    pthread_t update_thread;
     int anim_count = 1;
     /* TEXT LENGTH: "CHAMPS: 20 mins    DOGGIE'S: 15 mins     "*/
     char* content = "CHAMPS: 20 mins    DOGGIE'S: 15 mins     ";
+    // char* content = "BRYANT IS GAY";
     Color *text_color_1 = malloc(sizeof(Color));
     text_color_1->red = 0;
     text_color_1->green = 0;
@@ -107,7 +130,21 @@ void display_all( void ) {
     comp[1] = *initialize_component( TEXT, content, animation, 1, text_color_2, NULL );
     free(text_color_1);
     free(text_color_2);
+    if (pthread_create(&update_thread, NULL, update_component, NULL) != 0) {
+        fprintf(stderr, "Error updating components\n");
+        return 1;
+    }
     render_loop();
+}
+
+void test_channels() {
+    frame_buf* test_frame = malloc(FRAME_BUF_SIZE);
+    memset(test_frame, 0, FRAME_BUF_SIZE);
+    for (int i = 0; i < FRAME_BUF_HEIGHT; i++) {
+        (*test_frame)[0][i] = 0xFF;
+    }
+    display_frame(test_frame);
+    free(test_frame);
 }
 
 void close_program( int signo ) {
@@ -166,6 +203,9 @@ int main(int argc, char** argv) {
                     return 1;
                 }
                 break;
+            case 'T':
+                test_channels();
+                break;
             default:                    // Otherwise error
                 printf("Unrecognised option '%c'\n", argv[args][1]);
                 printf("Options:\n"
@@ -173,6 +213,7 @@ int main(int argc, char** argv) {
                        "  -p     diplay predictions\n"\
                        "  -b     display bars\n"\
                        "  -a     display both\n"\
+                       "  -t     test channels\n"\
                       );
                 return(1);
             }
