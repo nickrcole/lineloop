@@ -22,6 +22,21 @@ const int COMPONENT_SIZE = sizeof(Component);
 char* FONT_PATH = "/home/pi/lineloop/fonts/TNR.ttf";
 Component* comp;
 
+void reverse_rendered_frame(frame_buf* rendered_frame) {
+    int i, start, end;
+    for (i = 0; i < 294; i++) {
+        start = 0;
+        end = 14;
+        while (start < end) {
+            int temp = (*rendered_frame)[i][start];
+            (*rendered_frame)[i][start] = (*rendered_frame)[i][end];
+            (*rendered_frame)[i][end] = temp;
+            start++;
+            end--;
+        }
+    }
+}
+
 void render_loop( void ) {
     struct timeval start, render_end, frame_end;
     double total_frame_time;
@@ -34,6 +49,11 @@ void render_loop( void ) {
 
         // Render Stage
         render(comp, rendered_frame);
+
+        // This is necessary because when I re-connected the data lines with a ribbon
+        // cable I did it backwards. So we reverse each of the 294 column arrays
+        // in the frame. Adding this call was easier than re-connecting the lines again.
+        reverse_rendered_frame(rendered_frame);
 
         display_frame(rendered_frame);
 
@@ -145,6 +165,7 @@ void test_channels() {
     }
     display_frame(test_frame);
     free(test_frame);
+    exit(0);
 }
 
 void close_program( int signo ) {
